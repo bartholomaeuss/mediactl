@@ -12,11 +12,12 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "mediactl",
-	Short: "Utilities for inspecting media libraries",
-	Long: `mediactl is a lightweight helper for working with Matroska (MKV) collections.
+	Short: "CLI utilities for media inspection and sidecar workflows",
+	Long: `mediactl is a focused CLI for inspecting media libraries and generating
+JSON sidecars for downstream tooling.
 
-Use the mkv namespace to export ffprobe JSON sidecars or build custom subcommands
-for other media workflows.`,
+Start with the sidecar namespace to export ffprobe snapshots or build custom
+commands around your media workflow.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

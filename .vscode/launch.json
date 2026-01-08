@@ -15,6 +15,32 @@
                 "ffprobe",
                 "--volume", "demo-data"
             ]
+        },
+        {
+            "name": "mediactl sidecar export (mkv)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "sidecar",
+                "export",
+                "--format", "mkv",
+                "demo-data"
+            ]
+        },
+        {
+            "name": "mediactl sidecar export (mp4)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "sidecar",
+                "export",
+                "--format", "mp4",
+                "demo-data"
+            ]
         }
     ]
 }

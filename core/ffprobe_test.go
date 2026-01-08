@@ -1,4 +1,4 @@
-package cmd
+package core
 
 import (
 	"bytes"
@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/spf13/cobra"
 )
 
 func TestWalkFFProbeProcessesFilesRecursively(t *testing.T) {
@@ -30,12 +28,9 @@ func TestWalkFFProbeProcessesFilesRecursively(t *testing.T) {
 	}
 
 	var out bytes.Buffer
-	cmd := &cobra.Command{}
-	cmd.SetOut(&out)
-
-	processed, err := walkFFProbe(root, ".mkv", cmd, spyRunner)
+	processed, err := WalkFFProbe(root, ".mkv", &out, spyRunner)
 	if err != nil {
-		t.Fatalf("walkFFProbe returned error: %v", err)
+		t.Fatalf("WalkFFProbe returned error: %v", err)
 	}
 	if processed != 2 {
 		t.Fatalf("expected 2 processed files, got %d", processed)
@@ -62,6 +57,39 @@ func TestWalkFFProbeProcessesFilesRecursively(t *testing.T) {
 	}
 }
 
+func TestWalkFFProbeAvoidsOverwritingSidecars(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "movie.mkv")
+	makeFile(t, target)
+
+	existing := target + ".json"
+	makeFile(t, existing)
+	makeFile(t, target+".1.json")
+
+	var outputs []string
+	spyRunner := func(input, output string) error {
+		outputs = append(outputs, output)
+		return os.WriteFile(output, []byte("{}"), 0o644)
+	}
+
+	processed, err := WalkFFProbe(root, ".mkv", nil, spyRunner)
+	if err != nil {
+		t.Fatalf("WalkFFProbe returned error: %v", err)
+	}
+	if processed != 1 {
+		t.Fatalf("expected 1 processed file, got %d", processed)
+	}
+
+	if len(outputs) != 1 {
+		t.Fatalf("expected 1 output file, got %d", len(outputs))
+	}
+
+	expected := target + ".2.json"
+	if outputs[0] != expected {
+		t.Fatalf("expected output %s, got %s", expected, outputs[0])
+	}
+}
+
 func TestWalkFFProbePropagatesRunnerErrors(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "bad.mkv")
@@ -71,8 +99,7 @@ func TestWalkFFProbePropagatesRunnerErrors(t *testing.T) {
 		return fmt.Errorf("runner fail on %s", input)
 	}
 
-	cmd := &cobra.Command{}
-	processed, err := walkFFProbe(root, ".mkv", cmd, failingRunner)
+	processed, err := WalkFFProbe(root, ".mkv", nil, failingRunner)
 	if err == nil || !strings.Contains(err.Error(), "runner fail") {
 		t.Fatalf("expected runner error, got %v", err)
 	}
