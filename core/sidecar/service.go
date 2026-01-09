@@ -1,4 +1,5 @@
-package core
+// Package sidecar provides helpers for generating and naming ffprobe sidecars.
+package sidecar
 
 import (
 	"fmt"
@@ -11,7 +12,8 @@ import (
 // Runner executes ffprobe for a media file and writes output to the given path.
 type Runner func(input, output string) error
 
-// WalkFFProbe walks a directory and runs ffprobe for files matching the extension.
+// WalkFFProbe walks a directory tree, runs ffprobe for matching media files,
+// and writes sidecar JSON next to each input file.
 func WalkFFProbe(dir, extension string, out io.Writer, runner Runner) (int, error) {
 	if out == nil {
 		out = io.Discard
@@ -55,7 +57,8 @@ func WalkFFProbe(dir, extension string, out io.Writer, runner Runner) (int, erro
 	return processed, nil
 }
 
-// NextAvailableSidecarPath returns an available JSON sidecar path with a numeric suffix if needed.
+// NextAvailableSidecarPath picks the next available JSON sidecar filename,
+// adding numeric suffixes when a base sidecar already exists.
 func NextAvailableSidecarPath(mediaPath string) (string, error) {
 	base := mediaPath + ".json"
 	if _, err := os.Stat(base); err != nil {

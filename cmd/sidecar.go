@@ -5,7 +5,7 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// sidecarCmd represents the sidecar namespace.
+// sidecarCmd groups commands that generate or import media sidecars.
 var sidecarCmd = &cobra.Command{
 	Use:   "sidecar",
 	Short: "Create and manage JSON sidecars for media files",
@@ -16,6 +16,7 @@ and preparing metadata files that live alongside your media.`,
 	},
 }
 
+// init attaches the sidecar namespace to the root command.
 func init() {
 	rootCmd.AddCommand(sidecarCmd)
 }

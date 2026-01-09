@@ -1,83 +1,97 @@
 # mediactl
 
-`mediactl` is a tiny Go CLI built with Cobra that helps you inspect Matroska (MKV) media files. The first available workflow runs `ffprobe` across all `.mkv` files in a directory tree and produces JSON sidecars that you can diff, catalog, or feed into other tooling.
+`mediactl` is a Go CLI for sidecar-driven media workflows. It exports `ffprobe`
+JSON snapshots next to your media files and remuxes MP4 sources into MKV while
+applying `handler_name` changes you edit directly in the sidecar.
 
-## Quick Start
+## What it does
 
-```bash
-git clone https://example.com/your/mediactl.git
-cd mediactl
-GOOS=windows GOARCH=amd64 go build -buildvcs=false -o mediactl.exe .
-```
-
-The binary lives at `./mediactl` after `go build`. Install it globally with `go install`.
+- Export ffprobe JSON sidecars for MKV and MP4 libraries.
+- Remux MP4 into MKV and update `handler_name` tags on audio streams.
+- Walk directories recursively with predictable sidecar naming.
+- Log verbose ffmpeg output and the exact command before execution.
 
 ## Requirements
 
 - Go 1.22+
-- `ffprobe` (part of the FFmpeg suite) available on `$PATH`
-- Read/write access to the directories you want to scan
+- `ffprobe` on `$PATH` (FFmpeg suite)
+- `ffmpeg` on `$PATH` (for remux/import)
+- Read/write permissions for the media tree
+
+## Install
+
+```bash
+# Build locally
+GOOS=linux GOARCH=amd64 go build -buildvcs=false -o mediactl .
+
+# Or install into $GOBIN
+GOOS=linux GOARCH=amd64 go install ./...
+```
 
 ## Usage
 
-`mediactl` exposes a hierarchical command structure. Use `--help` at any level to see available options.
-
 ```bash
 mediactl --help
-mediactl mkv --help
+mediactl sidecar --help
 ```
 
-### Generate ffprobe sidecars for MKVs
+### Export sidecars
+
+Export MKV sidecars:
 
 ```bash
-mediactl mkv ffprobe /path/to/videos
+mediactl sidecar export --format mkv /path/to/media
 ```
 
-- Recursively finds every `.mkv` under the given directory (current directory if omitted).
-- Runs `ffprobe -v error -show_entries stream=index,codec_name,codec_type,profile:stream_disposition=default:stream_tags=title -print_format json` on each file.
-- Writes a JSON sidecar (`yourfile.mkv.json`) next to the original MKV.
-- Prints the path to every sidecar it writes; if no MKVs are found you get a friendly notice instead.
-
-Use a scratch directory or copies of production files the first time you try it to ensure the output structure matches your expectations.
-
-### Generate ffprobe sidecars for MP4s
+Export MP4 sidecars:
 
 ```bash
-mediactl mp4 ffprobe /path/to/videos
+mediactl sidecar export --format mp4 /path/to/media
 ```
 
-Behavior matches the MKV command but filters on `.mp4` files.
+Export behavior:
+
+- Walks the provided directory (defaults to `.` if omitted).
+- Runs ffprobe with a focused set of stream fields.
+- Writes `file.ext.json` next to the media file.
+- If a sidecar exists, writes `file.ext.1.json`, `file.ext.2.json`, etc.
+- Normalizes any `HANDLER_NAME` tag keys to lowercase `handler_name`.
+
+### Import sidecars (remux into MKV)
+
+After editing a sidecar by hand, remux the corresponding MP4 into MKV with
+updated `handler_name` tags for audio streams:
+
+```bash
+mediactl sidecar import "demo-data/Movie Title.mp4.json"
+```
+
+Import behavior:
+
+- The media file is derived from the sidecar name.
+  - `Movie.mp4.json` -> `Movie.mp4`
+  - `Movie.mp4.1.json` -> `Movie.mp4`
+- Output is `Movie.remux.mkv`.
+- Only audio streams with changed `handler_name` values are updated.
+- Data streams are dropped (Matroska does not support them).
+- The ffmpeg command is printed before execution; ffmpeg runs in verbose mode.
+
+## Project layout
+
+- `main.go`: CLI entrypoint.
+- `cmd/`: Cobra commands (`sidecar export`, `sidecar import`).
+- `core/sidecar/`: sidecar discovery and naming helpers.
+- `infra/exec/`: ffprobe and ffmpeg runners.
 
 ## Development
-
-The repo is designed to work without extra setup:
 
 ```bash
 go build ./...
 ```
 
-### Testing
-
-`cmd/mkv_ffprobe_test.go` contains unit tests for the recursive ffprobe walker. They replace the real `ffprobe` call with a fake runner, so the tests do not require FFmpeg.
-
 ```bash
 go test ./...
 ```
-
-### Project Layout
-
-- `main.go` wires Cobra’s root command.
-- `cmd/root.go` declares the root CLI node.
-- `cmd/mkv.go` hosts the `mkv` namespace.
-- `cmd/mkv_ffprobe.go` implements the recursive ffprobe sidecar export logic.
-- `cmd/mkv_ffprobe_test.go` provides regression tests for the walker.
-
-## Contributing
-
-1. Fork the repo and create a feature branch.
-2. Make your changes with clear commits.
-3. Run `go test ./...`.
-4. Open a PR with context on the media workflows you’re targeting.
 
 ## License
 

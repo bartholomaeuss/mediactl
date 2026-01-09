@@ -1,6 +1,7 @@
 /*
 Copyright © 2025 Bartholomaeuss
 */
+// Package cmd defines the Cobra command tree for mediactl.
 package cmd
 
 import (
@@ -9,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd is the top-level command used when no subcommand is provided.
 var rootCmd = &cobra.Command{
 	Use:   "mediactl",
 	Short: "CLI utilities for media inspection and sidecar workflows",
@@ -20,8 +21,7 @@ Start with the sidecar namespace to export ffprobe snapshots or build custom
 commands around your media workflow.`,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// Execute builds the command tree and runs the CLI, exiting on command failure.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -29,5 +29,6 @@ func Execute() {
 	}
 }
 
+// init registers subcommands attached to the root command.
 func init() {
 }

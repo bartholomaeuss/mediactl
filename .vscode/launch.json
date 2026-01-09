@@ -6,17 +6,6 @@
     "configurations": [
 
         {
-            "name": "mediactl ffprobe",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "args": [
-                "ffprobe",
-                "--volume", "demo-data"
-            ]
-        },
-        {
             "name": "mediactl sidecar export (mkv)",
             "type": "go",
             "request": "launch",
@@ -40,6 +29,18 @@
                 "export",
                 "--format", "mp4",
                 "demo-data"
+            ]
+        },
+        {
+            "name": "mediactl sidecar import",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "sidecar",
+                "import",
+                "demo-data/Asterix bei den Briten [tmdbid-9318].mp4.json"
             ]
         }
     ]
